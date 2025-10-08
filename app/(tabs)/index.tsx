@@ -1,4 +1,6 @@
-import { AntDesign, Feather } from '@expo/vector-icons';
+import { Arimo_400Regular, Arimo_700Bold, useFonts as useArimo } from '@expo-google-fonts/arimo';
+import { Caveat_700Bold, useFonts as useCaveat } from '@expo-google-fonts/caveat';
+import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
@@ -32,19 +34,45 @@ export default function PantallaCombinadaLibrariis() {
   const [passwordRegistro, setPasswordRegistro] = useState('');
   const [confirmarPassword, setConfirmarPassword] = useState('');
 
+  // Estados para el foco de los inputs
+  const [focusedInput, setFocusedInput] = useState(null);
+  const handleFocus = (inputName) => setFocusedInput(inputName);
+  const handleBlur = () => setFocusedInput(null);
+  const getInputBorderColor = (inputName) => {
+    return focusedInput === inputName ? '#be3c6cff' : 'rgba(0, 0, 0, 1)';
+  };
+  const getInputIconColor = (inputName) => {
+    return focusedInput === inputName ? '#be3c6cff' : '#555';
+  };
+
   const [pestañaActiva, setPestañaActiva] = useState('Login');
   const [tabContainerWidth, setTabContainerWidth] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: pestañaActiva === 'Login' ? 0 : tabContainerWidth / 2,
-      useNativeDriver: false, // 'left' property is not supported by native driver
-    }).start();
+    if (tabContainerWidth > 0) {
+      Animated.spring(slideAnim, {
+        toValue: pestañaActiva === 'Login' ? 0 : tabContainerWidth / 2,
+        useNativeDriver: false, 
+      }).start();
+    }
   }, [pestañaActiva, tabContainerWidth]);
 
-  const handleTabPress = (tab) => {
-    if (tabContainerWidth > 0) { // Ensure width is measured before allowing press
+  const [arimoLoaded] = useArimo({
+    Arimo_400Regular,
+    Arimo_700Bold,
+  });
+
+  const [caveatLoaded] = useCaveat({
+    Caveat_700Bold,
+  });
+
+  if (!arimoLoaded || !caveatLoaded) {
+    return null; // O un componente de carga mientras las fuentes se cargan
+  }
+
+  const handleTabPress = (tab) => { 
+    if (tabContainerWidth > 0) { 
       setPestañaActiva(tab);
     }
   };
@@ -54,7 +82,7 @@ export default function PantallaCombinadaLibrariis() {
   const mostrarVistaBienvenida = () => setVistaActual('welcome');
 
   const manejarLogin = () => {
-    // Aquí iría tu lógica de inicio de sesión
+    // Aquí iría la lógica de inicio de sesión
     Alert.alert('Inicio de Sesión', `Email: ${email}\nContraseña: ${password}`);
   };
 
@@ -63,7 +91,7 @@ export default function PantallaCombinadaLibrariis() {
       Alert.alert('Error', 'Las contraseñas no coinciden.');
       return;
     }
-    // Aquí iría tu lógica de registro
+    // Aquí iría la lógica de registro
     Alert.alert('Cuenta Creada', `Nombre: ${nombreRegistro}\nEmail: ${emailRegistro}\nTeléfono: ${telefonoRegistro}`);
   };
 
@@ -79,7 +107,7 @@ export default function PantallaCombinadaLibrariis() {
       >
         <StatusBar barStyle="light-content" />
         <LinearGradient
-          colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.2)', 'rgba(29, 108, 118, 0.7)']}
+          colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', '#620457']}
           locations={[0, 0.5, 1]}
           style={styles.superposicionDegradado}
         >
@@ -89,11 +117,11 @@ export default function PantallaCombinadaLibrariis() {
               style={styles.logoBienvenida} 
               resizeMode="contain"
             />
-            <Text style={styles.tituloBienvenida}>TXTour Guide</Text>
+            <Text style={styles.tituloBienvenida}>TXTour Guide</Text> 
             <Text style={styles.subtituloBienvenida}>Tu guía turística personal a un clic.</Text>
             <BlurView intensity={90} tint="light" style={styles.botonBienvenidaGlass}>
               <TouchableOpacity style={styles.botonBienvenida} onPress={mostrarVistaAuth}>
-                <Text style={styles.textoBotonBienvenida}>CREAR CUENTA</Text>
+                <Text style={styles.textoBotonBienvenida}>¡BIENVENIDO!</Text>
               </TouchableOpacity>
             </BlurView>
           </View>
@@ -119,8 +147,8 @@ export default function PantallaCombinadaLibrariis() {
                 style={styles.logoAuth}
                 resizeMode="contain"
               />
-              <Text style={styles.tituloEncabezadoAuth}>TXTour Guide</Text>
-              <Text style={styles.subtituloEncabezadoAuth}>App de Turismo</Text>
+              <Text style={styles.tituloEncabezadoAuth}>TXTour Guide</Text> 
+              <Text style={styles.subtituloEncabezadoAuth}>App de Turismo</Text> 
             </View>
 
             <BlurView
@@ -157,9 +185,9 @@ export default function PantallaCombinadaLibrariis() {
 
                 {pestañaActiva === 'Login' && (
                   <View>
-                    <BlurView intensity={90} tint="light" style={styles.contenedorInputGlass}>
+                    <BlurView intensity={90} tint="light" style={[styles.contenedorInputGlass, { borderColor: getInputBorderColor('loginEmail') }]}>
                       <View style={styles.contenidoInputGlass}>
-                        <Feather name="mail" size={20} color="#555" style={styles.inputIcon} />
+                        <Feather name="mail" size={20} color={getInputIconColor('loginEmail')} style={styles.inputIcon} />
                         <TextInput
                           style={styles.input}
                           placeholder="Correo Electrónico"
@@ -168,12 +196,14 @@ export default function PantallaCombinadaLibrariis() {
                           onChangeText={setEmail}
                           keyboardType="email-address"
                           autoCapitalize="none"
+                          onFocus={() => handleFocus('loginEmail')}
+                          onBlur={handleBlur}
                         />
                       </View>
                     </BlurView>
-                    <BlurView intensity={90} tint="light" style={styles.contenedorInputGlass}>
+                    <BlurView intensity={90} tint="light" style={[styles.contenedorInputGlass, { borderColor: getInputBorderColor('loginPassword') }]}>
                       <View style={styles.contenidoInputGlass}>
-                        <Feather name="lock" size={20} color="#555" style={styles.inputIcon} />
+                        <Feather name="lock" size={20} color={getInputIconColor('loginPassword')} style={styles.inputIcon} />
                         <TextInput
                           style={styles.input}
                           placeholder="Contraseña"
@@ -181,6 +211,8 @@ export default function PantallaCombinadaLibrariis() {
                           value={password}
                           onChangeText={setPassword}
                           secureTextEntry
+                          onFocus={() => handleFocus('loginPassword')}
+                          onBlur={handleBlur}
                         />
                         <TouchableOpacity style={styles.iconoOjo}>
                           <Feather name="eye-off" size={20} color="#555" />
@@ -203,7 +235,7 @@ export default function PantallaCombinadaLibrariis() {
                     </View>
 
                     <TouchableOpacity style={styles.botonGoogle} onPress={manejarGoogleLogin}>
-                      <AntDesign name="google" size={20} color="#030313ff" />
+                      <Image source={{ uri: 'https://img.icons8.com/color/48/google-logo.png' }} style={styles.googleIcon} />
                       <Text style={styles.textoBotonGoogle}>Iniciar sesión con Google</Text>
                     </TouchableOpacity>
                   </View>
@@ -214,34 +246,34 @@ export default function PantallaCombinadaLibrariis() {
                     <Text style={styles.textoPlaceholderSignup}>
                       Bienvenido, crea tu cuenta:
                     </Text>
-                    <BlurView intensity={90} tint="light" style={styles.contenedorInputGlass}>
+                    <BlurView intensity={90} tint="light" style={[styles.contenedorInputGlass, { borderColor: getInputBorderColor('signupName') }]}>
                       <View style={styles.contenidoInputGlass}>
-                        <Feather name="user" size={20} color="#555" style={styles.inputIcon} />
-                        <TextInput style={styles.input} placeholder="Nombre Completo" placeholderTextColor="#555" value={nombreRegistro} onChangeText={setNombreRegistro} autoCapitalize="words" />
+                        <Feather name="user" size={20} color={getInputIconColor('signupName')} style={styles.inputIcon} />
+                        <TextInput style={styles.input} placeholder="Nombre Completo" placeholderTextColor="#555" value={nombreRegistro} onChangeText={setNombreRegistro} autoCapitalize="words" onFocus={() => handleFocus('signupName')} onBlur={handleBlur} />
                       </View>
                     </BlurView>
-                    <BlurView intensity={90} tint="light" style={styles.contenedorInputGlass}>
+                    <BlurView intensity={90} tint="light" style={[styles.contenedorInputGlass, { borderColor: getInputBorderColor('signupPhone') }]}>
                       <View style={styles.contenidoInputGlass}>
-                        <Feather name="phone" size={20} color="#555" style={styles.inputIcon} />
-                        <TextInput style={styles.input} placeholder="Número de Teléfono" placeholderTextColor="#555" value={telefonoRegistro} onChangeText={setTelefonoRegistro} keyboardType="phone-pad" autoCapitalize="none" />
+                        <Feather name="phone" size={20} color={getInputIconColor('signupPhone')} style={styles.inputIcon} />
+                        <TextInput style={styles.input} placeholder="Número de Teléfono" placeholderTextColor="#555" value={telefonoRegistro} onChangeText={setTelefonoRegistro} keyboardType="phone-pad" autoCapitalize="none" onFocus={() => handleFocus('signupPhone')} onBlur={handleBlur} />
                       </View>
                     </BlurView>
-                    <BlurView intensity={90} tint="light" style={styles.contenedorInputGlass}>
+                    <BlurView intensity={90} tint="light" style={[styles.contenedorInputGlass, { borderColor: getInputBorderColor('signupEmail') }]}>
                       <View style={styles.contenidoInputGlass}>
-                        <Feather name="mail" size={20} color="#555" style={styles.inputIcon} />
-                        <TextInput style={styles.input} placeholder="Correo Electrónico" placeholderTextColor="#555" value={emailRegistro} onChangeText={setEmailRegistro} keyboardType="email-address" autoCapitalize="none" />
+                        <Feather name="mail" size={20} color={getInputIconColor('signupEmail')} style={styles.inputIcon} />
+                        <TextInput style={styles.input} placeholder="Correo Electrónico" placeholderTextColor="#555" value={emailRegistro} onChangeText={setEmailRegistro} keyboardType="email-address" autoCapitalize="none" onFocus={() => handleFocus('signupEmail')} onBlur={handleBlur} />
                       </View>
                     </BlurView>
-                    <BlurView intensity={90} tint="light" style={styles.contenedorInputGlass}>
+                    <BlurView intensity={90} tint="light" style={[styles.contenedorInputGlass, { borderColor: getInputBorderColor('signupPassword') }]}>
                       <View style={styles.contenidoInputGlass}>
-                        <Feather name="lock" size={20} color="#555" style={styles.inputIcon} />
-                        <TextInput style={styles.input} placeholder="Contraseña" placeholderTextColor="#555" value={passwordRegistro} onChangeText={setPasswordRegistro} secureTextEntry />
+                        <Feather name="lock" size={20} color={getInputIconColor('signupPassword')} style={styles.inputIcon} />
+                        <TextInput style={styles.input} placeholder="Contraseña" placeholderTextColor="#555" value={passwordRegistro} onChangeText={setPasswordRegistro} secureTextEntry onFocus={() => handleFocus('signupPassword')} onBlur={handleBlur} />
                       </View>
                     </BlurView>
-                    <BlurView intensity={90} tint="light" style={styles.contenedorInputGlass}>
+                    <BlurView intensity={90} tint="light" style={[styles.contenedorInputGlass, { borderColor: getInputBorderColor('signupConfirmPassword') }]}>
                       <View style={styles.contenidoInputGlass}>
-                        <Feather name="lock" size={20} color="#555" style={styles.inputIcon} />
-                        <TextInput style={styles.input} placeholder="Confirmar Contraseña" placeholderTextColor="#555" value={confirmarPassword} onChangeText={setConfirmarPassword} secureTextEntry />
+                        <Feather name="lock" size={20} color={getInputIconColor('signupConfirmPassword')} style={styles.inputIcon} />
+                        <TextInput style={styles.input} placeholder="Confirmar Contraseña" placeholderTextColor="#555" value={confirmarPassword} onChangeText={setConfirmarPassword} secureTextEntry onFocus={() => handleFocus('signupConfirmPassword')} onBlur={handleBlur} />
                       </View>
                     </BlurView>
 
@@ -255,7 +287,7 @@ export default function PantallaCombinadaLibrariis() {
                       <View style={styles.lineaSeparadora} />
                     </View>
                     <TouchableOpacity style={styles.botonGoogle} onPress={manejarGoogleLogin}>
-                      <AntDesign name="google" size={20} color="#030313ff" />
+                      <Image source={{ uri: 'https://img.icons8.com/color/48/google-logo.png' }} style={styles.googleIcon} />
                       <Text style={styles.textoBotonGoogle}>Registrarse con Google</Text>
                     </TouchableOpacity>
                   </View>
@@ -289,17 +321,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)' 
   },
   tituloBienvenida: { 
-    fontWeight: 'bold', 
+    fontFamily: 'Arimo400Regular',
     fontSize: 32, 
     color: '#FFFFFF', 
     marginBottom: 5 
   },
   subtituloBienvenida: { 
+    fontFamily: 'Arimo_400Regular',
     fontSize: 23, 
     color: '#E0E0E0', 
     textAlign: 'center', 
     marginBottom: 40,
-    fontVariant: ['small-caps']
+    fontVariant: ['small-caps'],
   },
   botonBienvenida: { 
     paddingVertical: 15, 
@@ -307,18 +340,23 @@ const styles = StyleSheet.create({
     width: '100%' 
   },
   botonBienvenidaGlass: {
-    borderRadius: 8,
-    width: '100%',
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    borderWidth: 1,
+    borderRadius: 30,
+    width: '50%',
+    borderColor: "#f8eff7ff",
+    shadowOffset:{width: 3, height: 3},
+    shadowOpacity: 0.9,
+    shadowColor: "#ffffffff",
+    borderWidth: 1.5,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    marginTop: 20, // Added margin to separate from text
+    backgroundColor:"#620457",
+    marginTop: 20, 
   },
   textoBotonBienvenida: { 
-    fontWeight: '600', 
-    color: '#000000', 
-    fontSize: 16 
+    fontFamily: 'Arimo_700Bold',
+    color: "#ffffffff", 
+    fontSize: 16,
+    textShadowColor: "rgba(0, 0, 0, 1)", 
+    textShadowOffset: { width: 2, height: 1 }
   },
   encabezadoAuth: { 
     alignItems: 'center', 
@@ -330,22 +368,23 @@ const styles = StyleSheet.create({
     height: 60, 
     marginBottom: 5, 
     borderRadius: 30, 
-    backgroundColor: '#fff' 
+    backgroundColor: "#1a181862", 
   },
   tituloEncabezadoAuth: { 
-    fontWeight: 'bold', 
+    fontFamily: 'Arimo_700Bold',
     fontSize: 24, 
     color: '#222' 
   },
   subtituloEncabezadoAuth: { 
     fontSize: 14, 
+    fontFamily: 'Arimo_700Bold',
     color: '#555' 
   },
   tarjeta: { 
     width: '100%',
     borderRadius: 20, 
     padding: 25,
-    shadowColor: '#000', 
+    shadowColor: '#ffffff', 
     shadowOffset: { width: 5, height: 0 }, 
     shadowOpacity: 0, 
     shadowRadius: 0.1, 
@@ -367,7 +406,7 @@ const styles = StyleSheet.create({
     flex: 1, 
     paddingVertical: 12, 
     alignItems: 'center',
-    zIndex: 1, // Asegura que el texto esté sobre el fondo deslizante
+    zIndex: 1, 
   },
   pestañaActiva: { 
     position: 'absolute',
@@ -382,27 +421,26 @@ const styles = StyleSheet.create({
     backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.8)' : 'transparent',
   },
   textoPestaña: { 
-    fontWeight: '500', 
+    fontFamily: 'Arimo_700bold',
     fontSize: 16, 
-    color: '#333' 
+    color: '#000000ff' 
   },
   textoPestañaActiva: { 
+    fontFamily: 'Arimo_700Bold',
     color: '#000',
-    fontWeight: 'bold',
   },
   contenedorInputGlass: {
-    borderRadius: 19,
+    borderRadius: 21,
     marginBottom: 26,
     height: 50,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(0, 0, 0, 1)',
     borderWidth: 1,
     overflow: 'hidden',
     shadowRadius: 4,
-    shadowColor: 'rgba(0, 0, 0, 1.2)',
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
     shadowOffset: { width: 6, height: 7 },
     shadowOpacity: 0.7, 
-    // Crucial para que BlurView respete el borderRadius
-    // El backgroundColor es manejado por el tint y la intensidad del BlurView
+    
   },
   contenidoInputGlass: {
     flexDirection: 'row',
@@ -413,7 +451,8 @@ const styles = StyleSheet.create({
   input: { 
     flex: 1, 
     fontSize: 16, 
-    color: '#3333331a', 
+    fontFamily: 'Arimo_700bold',
+    color: '#020202ff', 
     height: '100%' 
   },
   inputIcon: {
@@ -428,26 +467,29 @@ const styles = StyleSheet.create({
   },
   textoOlvidoContraseña: { 
     fontSize: 14, 
+    fontFamily: 'Arimo_700bold',
     color: '#888' 
   },
   botonLogin: { 
-    backgroundColor: '#5addfabd', 
+    backgroundColor: "#750931de", 
+    borderColor: 'rgba(0, 0, 0, 1)', 
     paddingVertical: 15, 
-    borderRadius: 29, 
+    borderRadius: 21, 
     alignItems: 'center', 
     width: '100%',
-    shadowOffset: {width:8, height:8},
-    shadowColor: "rgba(15, 15, 15, 1)",
-    shadowOpacity: 0.9 
+    shadowOffset: {width:1, height:1},
+    shadowOpacity: 0.10,
+    shadowColor: "rgba(15, 15, 15, 1)", 
   },
   textoBotonLogin: { 
-    fontWeight: 'bold', 
-    color: '#000000ff', 
+    fontFamily: 'Arimo_700Bold',
+    color: '#fffdfdff', 
     fontSize: 18 
   },
   textoPlaceholderSignup: { 
     textAlign: 'center', 
     color: '#000000ff', 
+    fontFamily: 'Arimo_700bold',
     marginBottom: 25 
   },
   separadorContenedor: {
@@ -462,6 +504,7 @@ const styles = StyleSheet.create({
   },
   textoSeparador: {
     marginHorizontal: 10,
+    fontFamily: 'Arimo_700bold',
     color: '#888',
     fontSize: 14,
   },
@@ -469,21 +512,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#38ca58bd',
+    backgroundColor: '#ffffffbd',
     paddingVertical: 15,
     borderRadius: 29,
     width: '100%',
-    borderColor: '#38ac58bd',
+    borderColor: '#020202bd',
     borderWidth: 1,
     shadowColor: "rgba(15, 15, 15, 1)",
-    shadowOffset: {width: 8, height: 8},
-    shadowOpacity: 0.7
+    shadowOffset: {width: 1, height: 1},
+    shadowOpacity: 0.1
   },
   textoBotonGoogle: {
     marginLeft: 10,
-    fontWeight: '600',
+    fontFamily: 'Arimo_700bold',
     color: '#000000ff',
     fontSize: 16,
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
   },
 
 });
